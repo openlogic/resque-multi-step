@@ -5,8 +5,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "resque-multi-step-task"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.summary = "Provides multi-step tasks with finalization and progress tracking"
+    gem.description = "Provides multi-step tasks with finalization and progress tracking"
     gem.email = "pezra@barelyenough.org"
     gem.homepage = "http://github.com/pezra/resque-multi-step-task"
     gem.authors = ["Peter Williams"]
