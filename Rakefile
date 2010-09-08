@@ -11,6 +11,9 @@ begin
     gem.homepage = "http://github.com/pezra/resque-multi-step-task"
     gem.authors = ["Peter Williams"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
+    gem.add_dependency 'resque', '~> 1.10'
+    gem.add_dependency 'redis-namespace', '~> 0.8.0'
+
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
