@@ -18,4 +18,4 @@ Note on Patches/Pull Requests
 Copyright
 -----
 
-Copyright (c) 2010 Peter Williams, OpenLogic. See LICENSE for details.
+Copyright (c) 2010 OpenLogic, Peter Williams. See LICENSE for details.
