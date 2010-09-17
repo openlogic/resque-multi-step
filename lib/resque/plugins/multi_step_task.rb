@@ -93,6 +93,26 @@ module Resque
           task.increment_completed_count
           task.maybe_finalize
         end
+
+        # Normally jobs that are part of a multi-step task are run
+        # asynchronously by putting them on a queue.  However, it is
+        # often more convenient to just run the jobs synchronously as
+        # they are registered in a development environment.  Setting
+        # mode to `:sync` provides a way to do just that.
+        #
+        # @param [:sync,:async] sync_or_async
+        def mode=(sync_or_async)
+          @@synchronous = (sync_or_async == :sync)
+        end
+
+        def synchronous?
+          @@synchronous
+        end
+        @@synchronous = false
+      end
+
+      def synchronous?
+        @@synchronous
       end
 
       # Instance methods 
@@ -137,8 +157,13 @@ module Resque
       #
       # @param [Class,Module] job_type The type of the job to be performed.
       def add_job(job_type, *args)
-        Resque::Job.create(queue_name, self.class, task_id, job_type.to_s, *args)
         increment_normal_job_count
+
+        if synchronous?
+          self.class.perform(task_id, job_type.to_s, *args)
+        else
+          Resque::Job.create(queue_name, self.class, task_id, job_type.to_s, *args)
+        end
       end
 
       # Finalization jobs are performed after all the normal jobs
@@ -148,6 +173,8 @@ module Resque
       # @param [Class,Module] job_type The type of job to be performed.
       def add_finalization_job(job_type, *args)
         increment_finalize_job_count
+
+        
         redis.rpush 'finalize_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
       end
 
@@ -162,7 +189,11 @@ module Resque
       # Make this multi-step task finalizable (see #finalizable?).
       def finalizable!
         redis.set 'is_finalizable', true
-        Resque::Job.create(queue_name, AssureFinalization, self.task_id)
+        if synchronous?
+          maybe_finalize
+        else
+          Resque::Job.create(queue_name, AssureFinalization, self.task_id)
+        end
       end
 
       # Finalize this job group.  Finalization entails running all

@@ -31,6 +31,16 @@ module  Resque::Plugins
         MultiStepTask.find('nonexistent-task')
       }.should raise_error(MultiStepTask::NoSuchMultiStepTask)
     end
+
+    it "allows mode to be set to :sync" do 
+      MultiStepTask.mode = :sync
+      MultiStepTask.should be_synchronous
+    end
+
+    it "allows mode to be set to :async" do 
+      MultiStepTask.mode = :async
+      MultiStepTask.should_not be_synchronous
+    end
   end
 
   describe MultiStepTask do 
@@ -63,6 +73,38 @@ module  Resque::Plugins
 
   end
 
+  describe MultiStepTask, "synchronous mode" do 
+    let(:task){MultiStepTask.create("some-task")}
+
+    before do 
+      MultiStepTask.mode = :sync
+    end
+    
+    after do
+      MultiStepTask.mode = :asyn
+    end
+
+    it "runs job when added" do
+      TestJob.should_receive(:perform).with("my", "args")
+      task.add_job(TestJob, "my", "args")
+    end
+
+    it "runs finalization job when added" do
+      TestJob.should_receive(:perform).with("my", "args")
+      task.add_finalization_job(TestJob, "my", "args")
+      task.finalizable!
+    end
+
+    it "runs finalization jobs last" do
+      TestJob.should_receive(:perform).with("my", "args").ordered
+      MyFinalJob.should_receive(:perform).with("final", "args").ordered
+
+      task.add_finalization_job(MyFinalJob, "final", "args")
+      task.add_job(TestJob, "my", "args")
+      task.finalizable!
+    end
+  end
+  
   describe MultiStepTask, "finalization" do 
     let(:task){MultiStepTask.create("some-task")}
 
@@ -177,3 +219,10 @@ module ::TestJob
     # no op
   end
 end
+
+module ::MyFinalJob
+  def self.perform(*args)
+    # no op
+  end
+end
+
