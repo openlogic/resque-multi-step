@@ -1,6 +1,6 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'resque-multi-step-task'
+require 'resque-multi-step'
 require 'spec'
 require 'spec/autorun'
 require 'pp'

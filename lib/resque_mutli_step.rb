@@ -1,1 +1,1 @@
-require 'resque-multi-step-task'
+require 'resque-multi-step'
