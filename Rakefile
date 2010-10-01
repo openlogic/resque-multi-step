@@ -4,12 +4,12 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "resque-multi-step-task"
+    gem.name = "resque-multi-step"
     gem.summary = "Provides multi-step tasks with finalization and progress tracking"
     gem.description = "Provides multi-step tasks with finalization and progress tracking"
     gem.email = "pezra@barelyenough.org"
-    gem.homepage = "http://github.com/pezra/resque-multi-step-task"
-    gem.authors = ["Peter Williams"]
+    gem.homepage = "http://github.com/pezra/resque-multi"
+    gem.authors = ["Peter Williams", "Morgan Whitney"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
     gem.add_dependency 'resque', '~> 1.10'
     gem.add_dependency 'redis-namespace', '~> 0.8.0'
