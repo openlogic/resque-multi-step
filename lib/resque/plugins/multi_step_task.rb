@@ -141,6 +141,11 @@ module Resque
         @redis ||= Redis::Namespace.new("resque:multisteptask:#{task_id}", :redis => Resque.redis)
       end
 
+      # The total number of jobs that are part of this task.
+      def total_job_count
+        normal_job_count + finalize_job_count
+      end
+
       # Removes all data from redis related to this task.
       def nuke
         redis.keys('*').each{|k| redis.del k}

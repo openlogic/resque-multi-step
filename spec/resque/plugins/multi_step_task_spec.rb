@@ -71,6 +71,18 @@ module  Resque::Plugins
       task.finalizable!
     end
 
+    it "knows total job count" do 
+      task.add_job(TestJob)
+
+      task.total_job_count.should == 1
+    end
+
+    it "includes finalization jobs in total job count" do 
+      task.add_job(TestJob)
+      task.add_finalization_job(TestJob, "my", "args")
+
+      task.total_job_count.should == 2
+    end
   end
 
   describe MultiStepTask, "synchronous mode" do 
