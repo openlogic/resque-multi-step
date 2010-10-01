@@ -8,11 +8,14 @@ begin
     gem.summary = "Provides multi-step tasks with finalization and progress tracking"
     gem.description = "Provides multi-step tasks with finalization and progress tracking"
     gem.email = "pezra@barelyenough.org"
-    gem.homepage = "http://github.com/pezra/resque-multi"
+    gem.homepage = "http://github.com/pezra/resque-multi-step"
     gem.authors = ["Peter Williams", "Morgan Whitney"]
+
     gem.add_development_dependency "rspec", ">= 1.2.9"
-    gem.add_dependency 'resque', '~> 1.10'
+
     gem.add_dependency 'redis-namespace', '~> 0.8.0'
+    gem.add_dependency 'resque', '~> 1.10'
+    gem.add_dependency 'resque-fairly', '~> 1.0'
 
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
@@ -42,7 +45,7 @@ Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
 
   rdoc.rdoc_dir = 'rdoc'
-  rdoc.title = "resque-multi-step-task #{version}"
+  rdoc.title = "resque-multi-step #{version}"
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
