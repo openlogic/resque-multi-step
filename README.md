@@ -46,15 +46,14 @@ it's task id.  First you persist the task id when you create the task.
 
 Then you can look it up using the `.find` method on `MultiStepTask`.
 
-    # Progress reporting action execution in a separate process.
+    # Progress reporting action; executed in a different process.
     begin
       task = Resque::Plugins::MultiStepTask.find(blog.async_task_id)
       render :text => "percent complete #{(task.completed_count.quo(task.total_job_count) * 100).round}%
       
     rescue Resque::Plugins::MultiStepTask::NoSuchMultiStepTask
-      task.async_task_id = nil
-      task.save!
-      
+      # task completed...
+     
       redirect_to blog_url(blog)
     end
 
@@ -67,7 +66,8 @@ all the rest have completed.  Mutli-step task finalization supports
 just that use case.
 
 Using our example, say we want to commit the solr index and then
-unlock the blog we are converting to pirate talk.
+unlock the blog we are converting to pirate talk once the conversion
+is complete.
 
     task = Resque::Plugins::MultiStepTask.create("pirate-take-over") do |task|
       blog.posts.each do |post|                                     
@@ -78,12 +78,22 @@ unlock the blog we are converting to pirate talk.
       task.add_finalization_job UnlockBlog, blog.id
     end    
 
-The would convert all the posts to pirate talk in parallel, using as
+This would convert all the posts to pirate talk in parallel, using as
 many workers as are available.  Once all the normal jobs are completed
 the finalization jobs are run serially in a single worker.
-finalization are executed in the order in which they are registered.
+Finalization are executed in the order in which they are registered.
 In our example, solr will be committed and then, after the commit is
 complete, the blog will be unlocked.
+
+Details
+----
+
+MultiStepTask creates a queue in resque for each task.  This combined
+with [resque-fairly][] provides fair scheduling of the constituent
+jobs.  It also provides a nice way to see what is going on in the
+system at any given time.  Just got to resque-web and look the queue
+list.  If you use meaningful slugs for your tasks you can get a quick
+birds-eye view of what is going on.
 
 Note on Patches/Pull Requests
 ----
