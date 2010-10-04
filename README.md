@@ -88,12 +88,16 @@ complete, the blog will be unlocked.
 Details
 ----
 
-MultiStepTask creates a queue in resque for each task.  This combined
-with [resque-fairly][] provides fair scheduling of the constituent
-jobs.  It also provides a nice way to see what is going on in the
-system at any given time.  Just got to resque-web and look the queue
-list.  If you use meaningful slugs for your tasks you can get a quick
-birds-eye view of what is going on.
+MultiStepTask creates a queue in resque for each task.  To process
+multi-step jobs you will need at least one Resque worker with
+`QUEUES=*`.  This combined with [resque-fairly][] provides fair
+scheduling of the constituent jobs.  
+
+Having a queue per multi-step task means that is easy to determine to
+what task a particular job belongs. It also provides a nice way to see
+what is going on in the system at any given time.  Just got to
+resque-web and look the queue list.  Use meaningful slugs for your
+tasks and you get a quick birds-eye view of what is going on.
 
 Note on Patches/Pull Requests
 ----
