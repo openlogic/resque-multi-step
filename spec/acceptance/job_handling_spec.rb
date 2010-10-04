@@ -1,6 +1,11 @@
 require File.expand_path("spec_helper", File.dirname(__FILE__))
 require 'resque/plugins/multi_step_task'
 
+# These tests are inherently sensitive to timing.  There are sleeps a
+# the appropriate places to reduce/eliminate false failures where
+# possible.  However, a failure does not always indicate a bug.  Run
+# the test multiple times before accepting failures at face value.
+
 describe "Acceptance: Successful task" do 
   let(:task) {
     Resque::Plugins::MultiStepTask.create("testing") do |task|
