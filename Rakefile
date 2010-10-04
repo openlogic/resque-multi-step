@@ -36,6 +36,13 @@ Spec::Rake::SpecTask.new(:rcov) do |spec|
   spec.rcov = true
 end
 
+namespace(:spec) do 
+  Spec::Rake::SpecTask.new(:acceptance) do |spec|
+    spec.libs << 'lib' << 'spec'
+    spec.spec_files = FileList['spec/acceptance/*_spec.rb']
+  end
+end
+
 task :spec => :check_dependencies
 
 task :default => :spec
@@ -49,3 +56,17 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+# Setup  for acceptance testing
+require 'rubygems'
+require 'resque/tasks'
+require 'resque-fairly'
+
+Resque.redis.namespace = ENV['NAMESPACE'] if ENV['NAMESPACE']
+
+$LOAD_PATH << File.expand_path("lib", File.dirname(__FILE__))
+require 'resque-multi-step'
+
+$LOAD_PATH << File.expand_path("spec/acceptance", File.dirname(__FILE__))
+require 'acceptance_jobs'
+

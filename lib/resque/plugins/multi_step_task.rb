@@ -1,6 +1,7 @@
 require 'resque'
 require 'redis-namespace'
 require 'resque/plugins/multi_step_task/assure_finalization'
+require 'resque/plugins/multi_step_task/finalization_job'
 require 'resque/plugins/multi_step_task/constantization'
 require 'resque/plugins/multi_step_task/atomic_counters'
 
@@ -13,7 +14,7 @@ module Resque
 
       class << self
         include Constantization
-            
+        
         NONCE_CHARS = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
 
         # A bit of randomness to ensure tasks are uniquely identified.
@@ -82,10 +83,9 @@ module Resque
         # Handle job invocation
         def perform(task_id, job_module_name, *args)
           task = MultiStepTask.find(task_id)
-
           begin
             constantize(job_module_name).perform(*args)
-          rescue Exception
+          rescue Exception => e
             task.increment_failed_count
             raise
           end
@@ -179,7 +179,6 @@ module Resque
       def add_finalization_job(job_type, *args)
         increment_finalize_job_count
 
-        
         redis.rpush 'finalize_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
       end
 
@@ -209,25 +208,34 @@ module Resque
       #
       # @raise [FinalizationAlreadyBegun] If some other process has
       #   already started (and/or finished) the finalization process.
-      #
-      # ---
-      # Finalization can only happen in one worker.  We use setnx in
-      # redis as a mutex to prevent multiple workers from executing the
-      # finalization jobs simultaneously.
       def finalize!
         raise FinalizationAlreadyBegun unless MultiStepTask.active?(task_id)
         raise NotReadyForFinalization if !ready_for_finalization? || incomplete_because_of_errors?
+
+        # Only one process is allowed to start the finalization
+        # process.  This setnx acts a global mutex for other processes
+        # that finish about the same time.
         raise FinalizationAlreadyBegun unless redis.setnx("i_am_the_finalizer", 1)
+        
+        if synchronous?
+          sync_finalize!
 
-        # This task hasn't been finalized by some other process and it
-        # is time to finalize this task.
+        else
+          if fin_job_info = redis.lpop('finalize_jobs')
+            fin_job_info = Yajl::Parser.parse(fin_job_info)
+            Resque::Job.create(queue_name, FinalizationJob, self.task_id, *fin_job_info)
+          else
+            # There is nothing left to do so cleanup.
+            nuke
+          end
+        end
+      end
 
+      def sync_finalize!
         while fin_job_info = redis.lpop('finalize_jobs')
           job_class_name, *args = Yajl::Parser.parse(fin_job_info)
-          constantize(job_class_name).perform(*args)
+          self.class.perform(task_id, job_class_name, *args)
         end
-
-        nuke
       end
 
       # Execute finalization sequence if it is time.
@@ -252,11 +260,9 @@ module Resque
       # If the failed job is retried and succeeds finalization will
       # proceed at usual.
       def incomplete_because_of_errors?
-        failed_count > 0
+        failed_count > 0 && completed_count < normal_job_count
       end
-
-
     end
-
   end
 end
+

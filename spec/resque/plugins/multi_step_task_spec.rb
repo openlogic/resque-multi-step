@@ -93,7 +93,7 @@ module  Resque::Plugins
     end
     
     after do
-      MultiStepTask.mode = :asyn
+      MultiStepTask.mode = :async
     end
 
     it "runs job when added" do
@@ -124,29 +124,17 @@ module  Resque::Plugins
       task.finalizable!
     end
 
-    it "invokes finalization jobs" do 
-      TestJob.should_receive(:perform).with(42)
+    it "queue finalization jobs" do 
+      Resque::Job.should_receive(:create).with(anything, Resque::Plugins::MultiStepTask::FinalizationJob, task.task_id, 'TestJob', 42)
 
       task.add_finalization_job(TestJob, 42)
       task.finalize!
     end
 
-    it "invokes finalization jobs in the order they are defined" do 
-      TestJob.should_receive(:perform).with(42).ordered
-      TestJob.should_receive(:perform).with(43).ordered
-      TestJob.should_receive(:perform).with(44).ordered
-
-      task.add_finalization_job(TestJob, 42)
-      task.add_finalization_job(TestJob, 43)
-      task.add_finalization_job(TestJob, 44)
-
-      task.finalize!
-    end
-
-    it "runs finalization at end of last job" do 
+    it "initiates finalization at end of last job" do 
       task.add_finalization_job(TestJob, 42)
 
-      TestJob.should_receive(:perform).with(42)
+      Resque::Job.should_receive(:create).with(anything, Resque::Plugins::MultiStepTask::FinalizationJob, task.task_id, 'TestJob', 42)
       Resque::Job.reserve(task.queue_name).perform
     end
 
@@ -219,9 +207,16 @@ module  Resque::Plugins
     end
 
     it "knows it is incomplete because of failures" do
+      task.increment_normal_job_count
       MultiStepTask.perform(task.task_id, 'TestJob', 42, 'aaa') rescue nil
       
       task.should be_incomplete_because_of_errors
+    end
+
+    it "knows it is complete when failures have occurred and have been retried successfully" do
+      MultiStepTask.perform(task.task_id, 'TestJob', 42, 'aaa') rescue nil
+      
+      task.should_not be_incomplete_because_of_errors
     end
   end
 end
