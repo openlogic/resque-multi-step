@@ -114,4 +114,4 @@ Note on Patches/Pull Requests
 Copyright
 -----
 
-Copyright (c) 2010 OpenLogic, Peter Williams. See LICENSE for details.
+Copyright (c) OpenLogic, Peter Williams. See LICENSE for details.
