@@ -31,6 +31,7 @@ Gem::Specification.new do |s|
      "lib/resque/plugins/multi_step_task/finalization_job.rb",
      "lib/resque_mutli_step.rb",
      "resque-multi-step-task.gemspec",
+     "resque-multi-step.gemspec",
      "spec/acceptance/acceptance_jobs.rb",
      "spec/acceptance/job_handling_spec.rb",
      "spec/acceptance/spec_helper.rb",
