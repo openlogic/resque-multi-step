@@ -111,6 +111,13 @@ Note on Patches/Pull Requests
   (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
 
+Mailing List
+----
+
+To join the list simply send an email to <mailto:resquemultistep@librelist.com>. This will subscribe you and send you information about your subscription, including unsubscribe information.
+
+The archive can be found at <http://librelist.com/browser/resquemultistep/>.
+
 Copyright
 -----
 
