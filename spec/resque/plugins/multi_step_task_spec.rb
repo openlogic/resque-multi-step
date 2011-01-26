@@ -115,6 +115,28 @@ module  Resque::Plugins
       task.add_job(TestJob, "my", "args")
       task.finalizable!
     end
+
+    it "knows it has failed if a normal job raises an exception" do
+      TestJob.should_receive(:perform).with("my", "args").ordered.and_raise('boo')
+      MyFinalJob.should_not_receive(:perform)
+      
+      task.add_finalization_job(MyFinalJob, "final", "args")
+      task.add_job(TestJob, "my", "args") rescue nil
+      task.finalizable!
+      task.should be_incomplete_because_of_errors
+    end
+
+    it "knows it has failed if a finalized job raises an exception" do
+      MyFinalJob.should_receive(:perform).with("final", "args").ordered.and_raise('boo')
+
+      task.add_finalization_job(MyFinalJob, "final", "args")
+
+      lambda{
+        task.finalizable!
+      }.should raise_error
+
+      task.should be_unfinalized_because_of_errors
+    end
   end
   
   describe MultiStepTask, "finalization" do 
