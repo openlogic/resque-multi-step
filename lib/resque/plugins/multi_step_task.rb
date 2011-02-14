@@ -86,6 +86,11 @@ module Resque
 
         # Handle job invocation
         def perform(task_id, job_module_name, *args)
+          task = perform_without_maybe_finalize(task_id, job_module_name, *args)
+          task.maybe_finalize
+        end
+
+        def perform_without_maybe_finalize(task_id, job_module_name, *args)
           task = MultiStepTask.find(task_id)
           begin
             constantize(job_module_name).perform(*args)
@@ -93,9 +98,12 @@ module Resque
             task.increment_failed_count
             raise
           end
-
           task.increment_completed_count
-          task.maybe_finalize
+          task
+        end
+
+        def perform_finalization(task_id, job_module_name, *args)
+          perform_without_maybe_finalize(task_id, job_module_name, *args)
         end
 
         # Normally jobs that are part of a multi-step task are run
@@ -225,7 +233,6 @@ module Resque
         
         if synchronous?
           sync_finalize!
-
         else
           if fin_job_info = redis.lpop('finalize_jobs')
             fin_job_info = Yajl::Parser.parse(fin_job_info)
@@ -240,16 +247,15 @@ module Resque
       def sync_finalize!
         while fin_job_info = redis.lpop('finalize_jobs')
           job_class_name, *args = Yajl::Parser.parse(fin_job_info)
-          self.class.perform(task_id, job_class_name, *args)
+          self.class.perform_finalization(task_id, job_class_name, *args)
         end
+        nuke
       end
 
       # Execute finalization sequence if it is time.
       def maybe_finalize
-        return unless ready_for_finalization?
+        return unless ready_for_finalization? && !incomplete_because_of_errors?
         finalize!
-      rescue Exception
-        # just eat the exception
       end
 
       # Is this task at the point where finalization can occur.
@@ -268,6 +274,11 @@ module Resque
       def incomplete_because_of_errors?
         failed_count > 0 && completed_count < normal_job_count
       end
+      
+      def unfinalized_because_of_errors?
+        failed_count > 0 && completed_count < (normal_job_count + finalize_job_count)
+      end
+
     end
   end
 end
