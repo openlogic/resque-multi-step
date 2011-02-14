@@ -7,6 +7,10 @@ require 'resque/plugins/multi_step_task/atomic_counters'
 
 module Resque
   module Plugins
+    # @attr_reader normal_job_count
+    # @attr_reader finalize_job_count
+    # @attr_reader completed_count
+    # @attr_reader failed_count
     class MultiStepTask
       class NoSuchMultiStepTask < StandardError; end
       class NotReadyForFinalization < StandardError; end
@@ -124,9 +128,11 @@ module Resque
       extend AtomicCounters
 
       counter :normal_job_count
+
       counter :finalize_job_count
 
       counter :completed_count
+
       counter :failed_count
 
 
