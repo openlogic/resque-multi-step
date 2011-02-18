@@ -15,6 +15,11 @@ module Resque
       class NoSuchMultiStepTask < StandardError; end
       class NotReadyForFinalization < StandardError; end
       class FinalizationAlreadyBegun < StandardError; end
+      class StdOutLogger
+        def warn(*args); puts args; end
+        def info(*args); puts args; end
+        def debug(*args); puts args; end
+      end
 
       class << self
         include Constantization
@@ -38,7 +43,7 @@ module Resque
           redis.sismember("active-tasks", task_id)
         end
         
-        # Create a brand new parallel job group.
+        # Create a brand new multi-step-task.
         #
         # @param [#to_s] slug The descriptive slug of the new job.  Default: a
         #   random UUID
@@ -56,16 +61,16 @@ module Resque
                     end
           task_id << "~" << nonce
           
-          pjg = new(task_id)
-          pjg.nuke
+          mst = new(task_id)
+          mst.nuke
           redis.sadd("active-tasks", task_id)
           redis.sismember("active-tasks", task_id)
           if block_given?
             yield pjg
-            pjg.finalizable!
+            mst.finalizable!
           end
           
-          pjg
+          mst
         end
 
         # Prevent calling MultiStepTask.new
@@ -75,13 +80,13 @@ module Resque
         #
         # @param [#to_s] task_id The unique key for the job group of interest.
         #
-        # @return [ParallelJobGroup] The group of interest
+        # @return [MultiStepTask] The group of interest
         #
         # @raise [NoSuchMultiStepTask] If there is not a group with the specified key.
         def find(task_id)
           raise NoSuchMultiStepTask unless active?(task_id)
           
-          pjg = new(task_id)
+          mst = new(task_id)
         end
 
         # Handle job invocation
@@ -93,8 +98,16 @@ module Resque
         def perform_without_maybe_finalize(task_id, job_module_name, *args)
           task = MultiStepTask.find(task_id)
           begin
+            job_start_key = "#{task_id}_#{job_module_name}_#{args}-start-time-#{nonce}"
+            task.redis.set(job_start_key, Time.now.to_i)
+            logger.debug("[Resque Multi-Step-Task] Executing #{job_module_name} job for #{task_id} at #{Time.now} (args: #{args})")
+
+            # perform the task
             constantize(job_module_name).perform(*args)
+
+            logger.debug("[Resque Multi-Step-Task] Finished executing #{job_module_name} job for #{task_id} at #{Time.now}, taking #{(Time.now - task.redis.get(job_start_key).to_i).to_i} seconds.")
           rescue Exception => e
+            logger.error("[Resque Multi-Step-Task] #{job_module_name} job failed for #{task_id} at #{Time.now} (args: #{args})")
             task.increment_failed_count
             raise
           end
@@ -104,6 +117,14 @@ module Resque
 
         def perform_finalization(task_id, job_module_name, *args)
           perform_without_maybe_finalize(task_id, job_module_name, *args)
+        end
+
+        def logger=(logger)
+          @@logger = logger
+        end
+
+        def logger
+          @@logger ||= RAILS_DEFAULT_LOGGER || StdOutLogger.new
         end
 
         # Normally jobs that are part of a multi-step task are run
@@ -132,6 +153,7 @@ module Resque
       include Constantization
 
       attr_reader :task_id
+      attr_accessor :logger
 
       extend AtomicCounters
 
@@ -149,6 +171,11 @@ module Resque
       # @param [String] task_id The UUID of the group of interest.
       def initialize(task_id)
         @task_id = task_id
+        redis.set 'start-time', Time.now.to_i
+      end
+
+      def logger
+        self.class.logger
       end
 
       def redis
@@ -177,6 +204,7 @@ module Resque
       # @param [Class,Module] job_type The type of the job to be performed.
       def add_job(job_type, *args)
         increment_normal_job_count
+        logger.debug("[Resque Multi-Step-Task] Adding #{job_type} job for #{task_id} (args: #{args})")
 
         if synchronous?
           self.class.perform(task_id, job_type.to_s, *args)
@@ -192,6 +220,7 @@ module Resque
       # @param [Class,Module] job_type The type of job to be performed.
       def add_finalization_job(job_type, *args)
         increment_finalize_job_count
+        logger.debug("[Resque Multi-Step-Task] Adding #{job_type} finalization job for #{task_id} (args: #{args})")
 
         redis.rpush 'finalize_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
       end
@@ -223,6 +252,7 @@ module Resque
       # @raise [FinalizationAlreadyBegun] If some other process has
       #   already started (and/or finished) the finalization process.
       def finalize!
+        logger.debug("[Resque Multi-Step-Task] Attempting to finalize #{task_id}")
         raise FinalizationAlreadyBegun unless MultiStepTask.active?(task_id)
         raise NotReadyForFinalization if !ready_for_finalization? || incomplete_because_of_errors?
 
@@ -239,6 +269,7 @@ module Resque
             Resque::Job.create(queue_name, FinalizationJob, self.task_id, *fin_job_info)
           else
             # There is nothing left to do so cleanup.
+            logger.debug "[Resque Multi-Step-Task] \"#{task_id}\" finalized successfully at #{Time.now}, taking #{(Time.now - redis.get('start-time').to_i).to_i} seconds."
             nuke
           end
         end
@@ -249,6 +280,8 @@ module Resque
           job_class_name, *args = Yajl::Parser.parse(fin_job_info)
           self.class.perform_finalization(task_id, job_class_name, *args)
         end
+
+        logger.debug "[Resque Multi-Step-Task] \"#{task_id}\" finalized successfully at #{Time.now}, taking #{(Time.now - redis.get('start-time').to_i).to_i} seconds."
         nuke
       end
 
