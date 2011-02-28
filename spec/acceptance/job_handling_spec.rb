@@ -89,22 +89,24 @@ end
 
 describe "Acceptance: Task with retried finalization failure" do 
   let(:task) {
-    Resque.redis.del "testing counter"
+    @counter_key = "testing-counter-#{Time.now.to_i}"
+    @fin_key = "fin-key-#{Time.now.to_i}"
+    Resque.redis.del @counter_key
+    Resque.redis.del @fin_key
     Resque::Plugins::MultiStepTask.create("testing") do |task|
-      task.add_finalization_job MultiStepAcceptance::FailOnceJob, "fin-job"
-      task.add_finalization_job MultiStepAcceptance::CounterJob,"testing counter"
+      task.add_finalization_job MultiStepAcceptance::FailOnceJob, @fin_key
+      task.add_finalization_job MultiStepAcceptance::CounterJob, @counter_key
     end
   }
 
   before do
     Resque::Failure.clear
-    Resque.redis.del "testing counter"
-    
+
     task
-    sleep 1
-    
+    sleep 5
+
     Resque::Failure.requeue 0
-    sleep 1
+    sleep 5
   end
 
   it "completes task" do 
@@ -115,7 +117,7 @@ describe "Acceptance: Task with retried finalization failure" do
 
 
   it "runs following finalization jobs" do 
-    Resque.redis.get("testing counter").to_i.should == 1
+    Resque.redis.get(@counter_key).should == "1"
   end
   
 end

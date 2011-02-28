@@ -9,7 +9,6 @@ module Resque
 
         # Handle job invocation
         def self.perform(task_id, job_module_name, *args)
-#          puts "finalizationjob#perform(#{task_id.inspect}, #{job_module_name.inspect}, #{args.inspect})"
           task = MultiStepTask.find(task_id)
           
           begin
