@@ -13,7 +13,8 @@ begin
 
     gem.add_development_dependency "rspec", ">= 1.2.9"
 
-    gem.add_dependency 'redis-namespace', '~> 0.8.0'
+    gem.add_dependency 'redis-namespace', '>= 0.8.0', '<= 0.10.0'
+    gem.add_dependency 'yajl-ruby'
     gem.add_dependency 'resque', '~> 1.10'
     gem.add_dependency 'resque-fairly', '~> 1.0'
 
