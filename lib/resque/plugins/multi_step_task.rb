@@ -4,6 +4,8 @@ require 'resque/plugins/multi_step_task/assure_finalization'
 require 'resque/plugins/multi_step_task/finalization_job'
 require 'resque/plugins/multi_step_task/constantization'
 require 'resque/plugins/multi_step_task/atomic_counters'
+require 'logger'
+require 'yajl'
 
 module Resque
   module Plugins
@@ -15,11 +17,6 @@ module Resque
       class NoSuchMultiStepTask < StandardError; end
       class NotReadyForFinalization < StandardError; end
       class FinalizationAlreadyBegun < StandardError; end
-      class StdOutLogger
-        def warn(*args); puts args; end
-        def info(*args); puts args; end
-        def debug(*args); puts args; end
-      end
 
       class << self
         include Constantization
@@ -98,14 +95,13 @@ module Resque
         def perform_without_maybe_finalize(task_id, job_module_name, *args)
           task = MultiStepTask.find(task_id)
           begin
-            job_start_key = "#{task_id}_#{job_module_name}_#{args}-start-time-#{nonce}"
-            task.redis.set(job_start_key, Time.now.to_i)
-            logger.debug("[Resque Multi-Step-Task] Executing #{job_module_name} job for #{task_id} at #{Time.now} (args: #{args})")
+            start_time = Time.now
+            logger.debug("[Resque Multi-Step-Task] Executing #{job_module_name} job for #{task_id} at #{start_time} (args: #{args})")
 
             # perform the task
             constantize(job_module_name).perform(*args)
 
-            logger.debug("[Resque Multi-Step-Task] Finished executing #{job_module_name} job for #{task_id} at #{Time.now}, taking #{(Time.now - task.redis.get(job_start_key).to_i).to_i} seconds.")
+            logger.debug("[Resque Multi-Step-Task] Finished executing #{job_module_name} job for #{task_id} at #{Time.now}, taking #{(Time.now - start_time)} seconds.")
           rescue Exception => e
             logger.error("[Resque Multi-Step-Task] #{job_module_name} job failed for #{task_id} at #{Time.now} (args: #{args})")
             task.increment_failed_count
@@ -124,7 +120,7 @@ module Resque
         end
 
         def logger
-          @@logger ||= RAILS_DEFAULT_LOGGER || StdOutLogger.new
+          @@logger ||= Logger.new(STDERR)
         end
 
         # Normally jobs that are part of a multi-step task are run
