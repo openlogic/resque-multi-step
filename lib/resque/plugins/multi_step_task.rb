@@ -285,6 +285,10 @@ module Resque
       def maybe_finalize
         return unless ready_for_finalization? && !incomplete_because_of_errors?
         finalize!
+      rescue FinalizationAlreadyBegun
+        # Just eat it the exception.  Sometimes multiple normal jobs
+        # will try to finalize a task simultaneously.  This is
+        # expected behavior because normal jobs run in parallel.
       end
 
       # Is this task at the point where finalization can occur.
