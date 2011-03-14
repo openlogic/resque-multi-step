@@ -124,7 +124,7 @@ module  Resque::Plugins
       task.add_job(TestJob, "my", "args") rescue nil
       task.finalizable!
 
-      task.should be_incomplete_because_of_error
+      task.should be_incomplete_because_of_errors
     end
 
     it "knows it has failed if a finalized job raises an exception" do

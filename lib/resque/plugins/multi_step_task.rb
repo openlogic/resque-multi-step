@@ -17,6 +17,11 @@ module Resque
       class NoSuchMultiStepTask < StandardError; end
       class NotReadyForFinalization < StandardError; end
       class FinalizationAlreadyBegun < StandardError; end
+      class StdOutLogger
+        def warn(*args); puts args; end
+        def info(*args); puts args; end
+        def debug(*args); puts args; end
+      end
 
       class << self
         include Constantization
