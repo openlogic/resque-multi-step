@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{resque-multi-step}
-  s.version = "1.1.1"
+  s.version = "1.1.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Peter Williams", "Morgan Whitney"]
-  s.date = %q{2011-02-28}
+  s.date = %q{2011-03-14}
   s.description = %q{Provides multi-step tasks with finalization and progress tracking}
   s.email = %q{pezra@barelyenough.org}
   s.extra_rdoc_files = [
@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     ".document",
+    "History.txt",
     "LICENSE",
     "README.md",
     "Rakefile",
