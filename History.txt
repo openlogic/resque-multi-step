@@ -1,0 +1,9 @@
+Version 1.1.2
+=====
+
+Fixed race condition around task finalization which caused some jobs to fail FinalizationAlreadyBegun errors.  This did not negatively impact task completion but it did clutter the failed job queue.
+
+Version 1.0.0 
+=======
+
+Initial port of internal code to support multi step tasks.
