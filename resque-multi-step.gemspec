@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Peter Williams", "Morgan Whitney"]
-  s.date = %q{2011-03-14}
+  s.date = %q{2011-05-22}
   s.description = %q{Provides multi-step tasks with finalization and progress tracking}
   s.email = %q{pezra@barelyenough.org}
   s.extra_rdoc_files = [
@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     ".document",
+    ".rvmrc",
     "History.txt",
     "LICENSE",
     "README.md",
@@ -42,41 +43,31 @@ Gem::Specification.new do |s|
   ]
   s.homepage = %q{http://github.com/pezra/resque-multi-step}
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.7}
+  s.rubygems_version = %q{1.6.1}
   s.summary = %q{Provides multi-step tasks with finalization and progress tracking}
-  s.test_files = [
-    "spec/acceptance/acceptance_jobs.rb",
-    "spec/acceptance/job_handling_spec.rb",
-    "spec/acceptance/spec_helper.rb",
-    "spec/resque-multi-step_spec.rb",
-    "spec/resque/plugins/multi_step_task/finalization_job_spec.rb",
-    "spec/resque/plugins/multi_step_task_spec.rb",
-    "spec/spec_helper.rb"
-  ]
 
   if s.respond_to? :specification_version then
-    current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_development_dependency(%q<rspec>, [">= 1.2.9"])
-      s.add_runtime_dependency(%q<redis-namespace>, [">= 0.8.0", "<= 0.10.0"])
+      s.add_development_dependency(%q<rspec>, [">= 0"])
+      s.add_runtime_dependency(%q<redis-namespace>, [">= 0"])
       s.add_runtime_dependency(%q<yajl-ruby>, [">= 0"])
-      s.add_runtime_dependency(%q<resque>, ["~> 1.10"])
-      s.add_runtime_dependency(%q<resque-fairly>, ["~> 1.0"])
+      s.add_runtime_dependency(%q<resque>, [">= 0"])
+      s.add_runtime_dependency(%q<resque-fairly>, [">= 0"])
     else
-      s.add_dependency(%q<rspec>, [">= 1.2.9"])
-      s.add_dependency(%q<redis-namespace>, [">= 0.8.0", "<= 0.10.0"])
+      s.add_dependency(%q<rspec>, [">= 0"])
+      s.add_dependency(%q<redis-namespace>, [">= 0"])
       s.add_dependency(%q<yajl-ruby>, [">= 0"])
-      s.add_dependency(%q<resque>, ["~> 1.10"])
-      s.add_dependency(%q<resque-fairly>, ["~> 1.0"])
+      s.add_dependency(%q<resque>, [">= 0"])
+      s.add_dependency(%q<resque-fairly>, [">= 0"])
     end
   else
-    s.add_dependency(%q<rspec>, [">= 1.2.9"])
-    s.add_dependency(%q<redis-namespace>, [">= 0.8.0", "<= 0.10.0"])
+    s.add_dependency(%q<rspec>, [">= 0"])
+    s.add_dependency(%q<redis-namespace>, [">= 0"])
     s.add_dependency(%q<yajl-ruby>, [">= 0"])
-    s.add_dependency(%q<resque>, ["~> 1.10"])
-    s.add_dependency(%q<resque-fairly>, ["~> 1.0"])
+    s.add_dependency(%q<resque>, [">= 0"])
+    s.add_dependency(%q<resque-fairly>, [">= 0"])
   end
 end
 
