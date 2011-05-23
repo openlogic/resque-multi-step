@@ -1,0 +1,2 @@
+rvm gemset create 'resque-multi-step' 
+rvm gemset use 'resque-multi-step'
