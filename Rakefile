@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'rake'
-require 'rcov'
 
 begin
   require 'jeweler'
@@ -24,13 +23,6 @@ begin
   Jeweler::GemcutterTasks.new
 rescue LoadError
   puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
-end
-   
-require 'rcov/rcovtask'
-Rcov::RcovTask.new do |t|
-    t.libs << 'lib' << 'spec'
-    t.pattern = 'spec/**/*_spec.rb'
-    t.verbose = true
 end
 
 require 'rspec/core/rake_task'

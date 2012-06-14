@@ -12,7 +12,10 @@ module Resque
           task = MultiStepTask.find(task_id)
           
           begin
-            constantize(job_module_name).perform(*args)
+            klass = constantize(job_module_name)
+            klass.singleton_class.class_eval "def multi_step_task; @@task ||= MultiStepTask.find('#{task_id}'); end"
+            klass.singleton_class.class_eval "def multi_step_task_id; @@task_id ||= '#{task_id}'; end"
+            klass.perform(*args)
           rescue Exception
             task.increment_failed_count
             raise

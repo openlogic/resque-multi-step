@@ -27,5 +27,12 @@ module MultiStepAcceptance
       end
     end
   end
+
+  class BackRefJob
+    def self.perform
+      str = multi_step_task_id
+      mst = multi_step_task
+    end
+  end
   
 end

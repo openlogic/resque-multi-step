@@ -104,7 +104,11 @@ module Resque
             logger.debug("[Resque Multi-Step-Task] Executing #{job_module_name} job for #{task_id} at #{start_time} (args: #{args})")
 
             # perform the task
-            constantize(job_module_name).perform(*args)
+            klass = constantize(job_module_name)
+            klass.singleton_class.class_eval "def multi_step_task; @@task ||= MultiStepTask.find('#{task_id}'); end"
+            klass.singleton_class.class_eval "def multi_step_task_id; @@task_id ||= '#{task_id}'; end"
+
+            klass.perform(*args)
 
             logger.debug("[Resque Multi-Step-Task] Finished executing #{job_module_name} job for #{task_id} at #{Time.now}, taking #{(Time.now - start_time)} seconds.")
           rescue Exception => e
