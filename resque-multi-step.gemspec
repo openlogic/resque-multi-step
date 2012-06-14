@@ -4,14 +4,14 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{resque-multi-step}
-  s.version = "1.1.3"
+  s.name = "resque-multi-step"
+  s.version = "2.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Peter Williams", "Morgan Whitney"]
-  s.date = %q{2011-05-23}
-  s.description = %q{Provides multi-step tasks with finalization and progress tracking}
-  s.email = %q{pezra@barelyenough.org}
+  s.date = "2012-06-14"
+  s.description = "Provides multi-step tasks with finalization and progress tracking"
+  s.email = "pezra@barelyenough.org"
   s.extra_rdoc_files = [
     "LICENSE",
     "README.md"
@@ -40,22 +40,12 @@ Gem::Specification.new do |s|
     "spec/spec.opts",
     "spec/spec_helper.rb"
   ]
-  s.homepage = %q{http://github.com/pezra/resque-multi-step}
+  s.homepage = "http://github.com/pezra/resque-multi-step"
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.7}
-  s.summary = %q{Provides multi-step tasks with finalization and progress tracking}
-  s.test_files = [
-    "spec/acceptance/acceptance_jobs.rb",
-    "spec/acceptance/job_handling_spec.rb",
-    "spec/acceptance/spec_helper.rb",
-    "spec/resque-multi-step_spec.rb",
-    "spec/resque/plugins/multi_step_task/finalization_job_spec.rb",
-    "spec/resque/plugins/multi_step_task_spec.rb",
-    "spec/spec_helper.rb"
-  ]
+  s.rubygems_version = "1.8.16"
+  s.summary = "Provides multi-step tasks with finalization and progress tracking"
 
   if s.respond_to? :specification_version then
-    current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
