@@ -105,8 +105,10 @@ module Resque
 
             # perform the task
             klass = constantize(job_module_name)
-            klass.singleton_class.class_eval "def multi_step_task; @@task ||= MultiStepTask.find('#{task_id}'); end"
-            klass.singleton_class.class_eval "def multi_step_task_id; @@task_id ||= '#{task_id}'; end"
+            
+            klass.singleton_class.class_eval "def multi_step_task; MultiStepTask.find(multi_step_task_id); end" unless
+              klass.singleton_class.method_defined? :multi_step_task
+            klass.singleton_class.class_eval "def multi_step_task_id; '#{task_id}'; end"
 
             klass.perform(*args)
 
