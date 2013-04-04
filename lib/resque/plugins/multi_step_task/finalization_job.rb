@@ -17,10 +17,11 @@ module Resque
             klass.singleton_class.class_eval "def multi_step_task_id; @@task_id ||= '#{task_id}'; end"
             klass.perform(*args)
           rescue Exception
+            logger.info("[Resque Multi-Step-Task] Incrementing failed_count: Finalization job #{job_module_name} failed for task id #{task_id} at #{Time.now} (args: #{args})")
             task.increment_failed_count
             raise
           end
-          
+          logger.info("[Resque Multi-Step-Task] Incrementing completed_count: Finalization job #{job_module_name} completed for task id #{task_id} at #{Time.now} (args: #{args})")          
           task.increment_completed_count
 
           if fin_job_info = task.redis.lpop('finalize_jobs')
