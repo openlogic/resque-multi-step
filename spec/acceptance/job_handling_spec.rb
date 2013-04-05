@@ -143,6 +143,7 @@ describe "Acceptance: Task needing to reference the original Multi-Step-Task" do
   end
 
   it "completes successfully and removes the queue" do 
+    5.times {sleep 1 if Resque::Failure.count < 1}
     Resque.queues.should_not include(task.queue_name)
   end
 end

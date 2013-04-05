@@ -34,6 +34,10 @@ module Resque
           end
 
         end
+        
+        def self.logger
+          Resque::Plugins::MultiStepTask.logger
+        end
       end
     end
   end
