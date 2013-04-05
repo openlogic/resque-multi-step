@@ -6,6 +6,7 @@ module Resque
           class_eval <<-INCR
             def increment_#{name}
               redis.incrby('#{name}', 1)
+              logger.info("[Resque Multi-Step-Task] Incremented #{name}")
             end
             INCR
 
