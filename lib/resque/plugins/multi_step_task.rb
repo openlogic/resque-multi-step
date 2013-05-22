@@ -104,14 +104,22 @@ module Resque
             logger.debug("[Resque Multi-Step-Task] Executing #{job_module_name} job for #{task_id} at #{start_time} (args: #{args})")
 
             # perform the task
-            constantize(job_module_name).perform(*args)
+            klass = constantize(job_module_name)
+            
+            klass.singleton_class.class_eval "def multi_step_task; MultiStepTask.find(multi_step_task_id); end" unless
+              klass.singleton_class.method_defined? :multi_step_task
+            klass.singleton_class.class_eval "def multi_step_task_id; '#{task_id}'; end"
+
+            klass.perform(*args)
 
             logger.debug("[Resque Multi-Step-Task] Finished executing #{job_module_name} job for #{task_id} at #{Time.now}, taking #{(Time.now - start_time)} seconds.")
           rescue Exception => e
             logger.error("[Resque Multi-Step-Task] #{job_module_name} job failed for #{task_id} at #{Time.now} (args: #{args})")
+            logger.info("[Resque Multi-Step-Task] Incrementing failed_count: #{job_module_name} job failed for task id #{task_id} at #{Time.now} (args: #{args})")
             task.increment_failed_count
             raise
           end
+          logger.info("[Resque Multi-Step-Task] Incrementing completed_count: #{job_module_name} job completed for task id #{task_id} at #{Time.now} (args: #{args})")
           task.increment_completed_count
           task
         end
@@ -143,6 +151,7 @@ module Resque
           @@synchronous
         end
         @@synchronous = false
+
       end
 
       def synchronous?
@@ -204,6 +213,8 @@ module Resque
       #
       # @param [Class,Module] job_type The type of the job to be performed.
       def add_job(job_type, *args)
+        logger.info("[Resque Multi-Step-Task] Incrementing normal_job_count: #{job_type} job added to task id #{task_id} at #{Time.now} (args: #{args})")
+        
         increment_normal_job_count
         logger.debug("[Resque Multi-Step-Task] Adding #{job_type} job for #{task_id} (args: #{args})")
 
@@ -220,6 +231,7 @@ module Resque
       #
       # @param [Class,Module] job_type The type of job to be performed.
       def add_finalization_job(job_type, *args)
+        logger.info("[Resque Multi-Step-Task] Incrementing finalize_job_count: Finalization job #{job_type} for task id #{task_id} at #{Time.now} (args: #{args})")
         increment_finalize_job_count
         logger.debug("[Resque Multi-Step-Task] Adding #{job_type} finalization job for #{task_id} (args: #{args})")
 

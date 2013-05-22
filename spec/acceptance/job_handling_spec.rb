@@ -121,3 +121,29 @@ describe "Acceptance: Task with retried finalization failure" do
   end
   
 end
+
+describe "Acceptance: Task needing to reference the original Multi-Step-Task" do
+  let(:task) do 
+    Resque::Plugins::MultiStepTask.create("testing") do |task|
+      task.add_job MultiStepAcceptance::BackRefJob
+      task.add_finalization_job MultiStepAcceptance::BackRefJob
+    end
+  end
+
+  before do
+    Resque.redis.del "testing"
+    task
+    sleep 1
+  end
+  
+  it "does not fail" do 
+    5.times {sleep 1 if Resque::Failure.count < 1}
+
+    Resque::Failure.count.should == 0
+  end
+
+  it "completes successfully and removes the queue" do 
+    5.times {sleep 1 if Resque::Failure.count < 1}
+    Resque.queues.should_not include(task.queue_name)
+  end
+end
