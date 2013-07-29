@@ -144,4 +144,4 @@ The archive can be found at <http://librelist.com/browser/resquemultistep/>.
 Copyright
 -----
 
-Copyright (c) OpenLogic, Peter Williams. See LICENSE for details.
+Copyright (c) OpenLogic, Inc. See LICENSE for details.
