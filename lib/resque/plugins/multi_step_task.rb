@@ -252,8 +252,15 @@ module Resque
         if synchronous?
           maybe_finalize
         else
-          Resque::Job.create(queue_name, AssureFinalization, self.task_id)
+          # finalization happens after normal jobs, but in the wierd case where 
+          # there are only finalization jobs, we need to add a fake normal job
+          # that just kicks off the finalization process
+          assure_finalization if normal_job_count == 0
         end
+      end
+      
+      def assure_finalization
+        Resque::Job.create(queue_name, AssureFinalization, self.task_id)
       end
 
       # Finalize this job group.  Finalization entails running all
