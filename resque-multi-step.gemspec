@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "resque-multi-step"
-  s.version = "2.0.3"
+  s.version = "2.0.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Peter Williams", "Morgan Whitney"]
-  s.date = "2013-04-03"
+  s.date = "2014-02-05"
   s.description = "Provides multi-step tasks with finalization and progress tracking"
   s.email = "pezra@barelyenough.org"
   s.extra_rdoc_files = [
@@ -18,6 +18,8 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     ".document",
+    "Gemfile",
+    "Gemfile.lock",
     "History.txt",
     "LICENSE",
     "README.md",
@@ -42,7 +44,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "http://github.com/pezra/resque-multi-step"
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.24"
+  s.rubygems_version = "1.8.23"
   s.summary = "Provides multi-step tasks with finalization and progress tracking"
 
   if s.respond_to? :specification_version then
@@ -51,12 +53,14 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<resque-multi-step>, [">= 0"])
       s.add_development_dependency(%q<rspec>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, [">= 0"])
       s.add_runtime_dependency(%q<redis-namespace>, [">= 0"])
       s.add_runtime_dependency(%q<yajl-ruby>, [">= 0"])
       s.add_runtime_dependency(%q<resque>, [">= 0"])
       s.add_runtime_dependency(%q<resque-fairly>, [">= 0"])
     else
       s.add_dependency(%q<resque-multi-step>, [">= 0"])
+      s.add_dependency(%q<rspec>, [">= 0"])
       s.add_dependency(%q<rspec>, [">= 0"])
       s.add_dependency(%q<redis-namespace>, [">= 0"])
       s.add_dependency(%q<yajl-ruby>, [">= 0"])
@@ -65,6 +69,7 @@ Gem::Specification.new do |s|
     end
   else
     s.add_dependency(%q<resque-multi-step>, [">= 0"])
+    s.add_dependency(%q<rspec>, [">= 0"])
     s.add_dependency(%q<rspec>, [">= 0"])
     s.add_dependency(%q<redis-namespace>, [">= 0"])
     s.add_dependency(%q<yajl-ruby>, [">= 0"])
