@@ -5,16 +5,20 @@ require 'acceptance_jobs'
 
 RSpec.configure do |c|
   c.before(:all) do
-    puts '---------- Starting Resque Worker ----------'
-    system 'BACKGROUND=yes PIDFILE=resque.pid QUEUE=* NAMESPACE=resque-multi-step-task-testing INTERVAL=0.5 rake resque:work'
+    puts '---------- Starting Resque Workers ----------'
+    3.times do |index|
+    system "BACKGROUND=yes PIDFILE=resque#{index}.pid QUEUE=* NAMESPACE=resque-multi-step-task-testing INTERVAL=0.5 rake resque:work"
+    end
     sleep 3
   end
 
   c.after(:all) do
     sleep 1
-    puts '---------- Stopping Resque Worker ----------'
-    pid = File.read('resque.pid').to_i
-    File.delete('resque.pid')
-    Process.kill('TERM', pid)
+    puts '---------- Stopping Resque Workers ----------'
+    3.times do |index|
+      pid = File.read("resque#{index}.pid").to_i
+      File.delete("resque#{index}.pid")
+      Process.kill('TERM', pid)
+    end
   end
 end
