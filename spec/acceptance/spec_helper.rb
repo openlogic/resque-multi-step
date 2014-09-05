@@ -3,11 +3,18 @@ require File.expand_path("../spec_helper", File.dirname(__FILE__))
 $LOAD_PATH << File.dirname(__FILE__)
 require 'acceptance_jobs'
 
-$worker_pid = fork
-if $worker_pid.nil?
-  # in child
-  exec "rake resque:work 'QUEUES=*' 'NAMESPACE=resque-multi-step-task-testing' INTERVAL=1 VERBOSE=1"
-end
+RSpec.configure do |c|
+  c.before(:all) do
+    puts '---------- Starting Resque Worker ----------'
+    system 'BACKGROUND=yes PIDFILE=resque.pid QUEUE=* NAMESPACE=resque-multi-step-task-testing INTERVAL=0.5 rake resque:work'
+    sleep 3
+  end
 
-# wait for worker to come up
-sleep 4
+  c.after(:all) do
+    sleep 1
+    puts '---------- Stopping Resque Worker ----------'
+    pid = File.read('resque.pid').to_i
+    File.delete('resque.pid')
+    Process.kill('TERM', pid)
+  end
+end
