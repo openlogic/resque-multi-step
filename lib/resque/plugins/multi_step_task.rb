@@ -30,9 +30,7 @@ module Resque
 
         # A bit of randomness to ensure tasks are uniquely identified.
         def nonce
-          nonce = ""
-          5.times{nonce << NONCE_CHARS[rand(NONCE_CHARS.length)]}
-          nonce
+          5.times.map{NONCE_CHARS.sample}.join
         end
         
         # A redis client suitable for storing global mutli-step task info.
