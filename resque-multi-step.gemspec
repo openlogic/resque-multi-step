@@ -53,16 +53,12 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<resque-multi-step>, [">= 0"])
       s.add_development_dependency(%q<rspec>, [">= 0"])
-      s.add_development_dependency(%q<rspec>, [">= 0"])
-      s.add_development_dependency(%q<rspec>, [">= 0"])
       s.add_runtime_dependency(%q<redis-namespace>, [">= 0"])
       s.add_runtime_dependency(%q<yajl-ruby>, [">= 0"])
       s.add_runtime_dependency(%q<resque>, [">= 0"])
       s.add_runtime_dependency(%q<resque-fairly>, [">= 0"])
     else
       s.add_dependency(%q<resque-multi-step>, [">= 0"])
-      s.add_dependency(%q<rspec>, [">= 0"])
-      s.add_dependency(%q<rspec>, [">= 0"])
       s.add_dependency(%q<rspec>, [">= 0"])
       s.add_dependency(%q<redis-namespace>, [">= 0"])
       s.add_dependency(%q<yajl-ruby>, [">= 0"])
@@ -71,8 +67,6 @@ Gem::Specification.new do |s|
     end
   else
     s.add_dependency(%q<resque-multi-step>, [">= 0"])
-    s.add_dependency(%q<rspec>, [">= 0"])
-    s.add_dependency(%q<rspec>, [">= 0"])
     s.add_dependency(%q<rspec>, [">= 0"])
     s.add_dependency(%q<redis-namespace>, [">= 0"])
     s.add_dependency(%q<yajl-ruby>, [">= 0"])
