@@ -18,7 +18,7 @@ RSpec.configure do |c|
     3.times do |index|
       pid = File.read("resque#{index}.pid").to_i
       File.delete("resque#{index}.pid")
-      Process.kill('TERM', pid)
+      Process.kill('QUIT', pid)
     end
   end
 end
