@@ -64,7 +64,6 @@ module Resque
           mst = new(task_id)
           mst.nuke
           redis.sadd("active-tasks", task_id)
-          redis.sismember("active-tasks", task_id)
           if block_given?
             yield mst
             mst.finalizable!
