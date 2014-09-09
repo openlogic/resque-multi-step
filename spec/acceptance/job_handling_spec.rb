@@ -147,3 +147,23 @@ describe "Acceptance: Task needing to reference the original Multi-Step-Task" do
     Resque.queues.should_not include(task.queue_name)
   end
 end
+
+describe "Acceptance: Finalization always runs" do
+  let(:task) do
+    Resque::Plugins::MultiStepTask.create("testing")
+  end
+
+  before do
+    Resque.redis.del "testing"
+    task.add_job MultiStepAcceptance::CounterJob, "testing counter"
+    task.add_job MultiStepAcceptance::CounterJob, "testing counter"
+    task.add_finalization_job MultiStepAcceptance::CounterJob, "testing counter"
+    sleep 1
+    task.finalizable!
+    sleep 1
+  end
+
+  it 'should run normal jobs and finalization job' do
+    Resque.redis.get("testing counter").to_i.should == 3
+  end
+end
