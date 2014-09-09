@@ -69,7 +69,7 @@ module Resque
             mst.finalizable!
           end
           
-          mst
+          mst.start
         end
 
         # Prevent calling MultiStepTask.new
@@ -272,7 +272,6 @@ module Resque
           # that just kicks off the finalization process
           assure_finalization if normal_job_count == 0
         end
-        start
       end
       
       def assure_finalization

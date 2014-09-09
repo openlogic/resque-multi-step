@@ -150,16 +150,17 @@ end
 
 describe "Acceptance: Finalization always runs" do
   let(:task) do
-    Resque::Plugins::MultiStepTask.create("testing")
+    Resque::Plugins::MultiStepTask.create("testing") do |task|
+      task.add_job MultiStepAcceptance::CounterJob, "testing counter"
+      task.add_job MultiStepAcceptance::CounterJob, "testing counter"
+      task.add_finalization_job MultiStepAcceptance::CounterJob, "testing counter"
+      sleep 1
+    end
   end
 
   before do
     Resque.redis.del "testing"
-    task.add_job MultiStepAcceptance::CounterJob, "testing counter"
-    task.add_job MultiStepAcceptance::CounterJob, "testing counter"
-    task.add_finalization_job MultiStepAcceptance::CounterJob, "testing counter"
-    sleep 1
-    task.finalizable!
+    task
     sleep 1
   end
 
