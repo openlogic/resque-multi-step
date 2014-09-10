@@ -179,7 +179,7 @@ module Resque
       # @param [String] task_id The UUID of the group of interest.
       def initialize(task_id)
         @task_id = task_id
-        @started = false
+        @started = @@synchronous
         redis.set 'start-time', Time.now.to_i
       end
 

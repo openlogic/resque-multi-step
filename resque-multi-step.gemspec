@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "resque-multi-step"
-  s.version = "2.0.5"
+  s.version = "2.0.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Peter Williams", "Morgan Whitney", "Cameron Mauch"]
-  s.date = "2014-09-09"
+  s.date = "2014-09-10"
   s.description = "Provides multi-step tasks with finalization and progress tracking"
   s.email = "pezra@barelyenough.org"
   s.extra_rdoc_files = [
