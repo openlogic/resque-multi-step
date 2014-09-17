@@ -57,6 +57,11 @@ module  Resque::Plugins
       task.add_job(TestJob)
     end
 
+    it "queues job when added to async task obtained via find" do
+      Resque::Job.should_receive(:create).with(task.queue_name, Resque::Plugins::MultiStepTask, task.task_id, 'TestJob')
+      Resque::Plugins::MultiStepTask.find(task.task_id).add_job(TestJob)
+    end
+
     it "allows finalization jobs to be added" do 
       task.add_finalization_job(TestJob)
     end
