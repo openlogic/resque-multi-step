@@ -168,3 +168,25 @@ describe "Acceptance: Finalization always runs" do
     Resque.redis.get("testing counter").to_i.should == 3
   end
 end
+
+describe "Acceptance: add job to multi step task via find" do
+  let(:task) do
+    Resque::Plugins::MultiStepTask.create("testing") do |task|
+      task.add_job MultiStepAcceptance::CounterJob, "testing add job"
+      task.add_job MultiStepAcceptance::WaitJob, 2
+    end
+  end
+
+  before do
+    Resque.redis.del "testing"
+    task
+    sleep 1
+    task2 = Resque::Plugins::MultiStepTask.find(task.task_id)
+    task2.add_job MultiStepAcceptance::CounterJob, "testing add job"
+    sleep 1
+  end
+
+  it 'should run added jobs' do
+    Resque.redis.get("testing add job").to_i.should == 2
+  end
+end

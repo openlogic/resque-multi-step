@@ -160,7 +160,6 @@ module Resque
       include Constantization
 
       attr_reader :task_id
-      attr_reader :started
       attr_accessor :logger
 
       extend AtomicCounters
@@ -179,8 +178,8 @@ module Resque
       # @param [String] task_id The UUID of the group of interest.
       def initialize(task_id)
         @task_id = task_id
-        @started = @@synchronous
-        redis.set 'start-time', Time.now.to_i
+        redis.setnx 'started', @@synchronous
+        redis.setnx 'start-time', Time.now.to_i
       end
 
       def logger
@@ -189,6 +188,10 @@ module Resque
 
       def redis
         @redis ||= Redis::Namespace.new("resque:multisteptask:#{task_id}", :redis => Resque.redis)
+      end
+
+      def started
+        redis.get('started') == 'true'
       end
 
       # The total number of jobs that are part of this task.
@@ -240,7 +243,7 @@ module Resque
             job_class, *args = Yajl::Parser.parse(nrm_job_info)
             run_job(job_class, *args)
           end
-          @started = true
+          redis.set 'started', true
         end
         self
       end
