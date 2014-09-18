@@ -8,7 +8,36 @@ module Resque
         extend Constantization
 
         # Handle job invocation
-        def self.perform(task_id, job_module_name, *args)
+        def self.perform task_id, job_module_name, *args
+          job_type = constantize job_module_name
+          MultiStepTask.before_hooks( job_type ).each do |hook|
+            job_type.send( hook, *args )
+          end
+          around_hooks = MultiStepTask.around_hooks( job_type )
+          if around_hooks.empty?
+            perform_without_hooks task_id, job_module_name, *args
+          else
+            stack = around_hooks.reverse.inject( nil ) do | last_hook, hook |
+              if last_hook
+                lambda do
+                  job_type.send( hook, *args ) { last_hook.call }
+                end
+              else
+                lambda do
+                  job_type.send( hook, *args ) do
+                    perform_without_hooks task_id, job_module_name, *args
+                  end
+                end
+              end
+            end
+            stack.call
+          end
+          MultiStepTask.after_hooks( job_type ).each do |hook|
+            job_type.send( hook, *args )
+          end
+        end
+
+        def self.perform_without_hooks(task_id, job_module_name, *args)
           task = MultiStepTask.find(task_id)
           
           begin
