@@ -169,6 +169,27 @@ describe "Acceptance: Finalization always runs" do
   end
 end
 
+describe "Acceptance: Finalization always runs without block" do
+  let(:task) do
+    Resque::Plugins::MultiStepTask.create("testing")
+  end
+
+  before do
+    Resque.redis.del "testing"
+    task
+    task.add_job MultiStepAcceptance::CounterJob, "testing counter"
+    task.add_job MultiStepAcceptance::CounterJob, "testing counter"
+    task.add_finalization_job MultiStepAcceptance::CounterJob, "testing counter"
+    sleep 1
+    task.finalizable!
+    sleep 1
+  end
+
+  it 'should run normal jobs and finalization job' do
+    Resque.redis.get("testing counter").to_i.should == 3
+  end
+end
+
 describe "Acceptance: add job to multi step task via find" do
   let(:task) do
     Resque::Plugins::MultiStepTask.create("testing") do |task|

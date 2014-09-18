@@ -44,7 +44,7 @@ module  Resque::Plugins
   end
 
   describe MultiStepTask do 
-    let(:task) {MultiStepTask.create("some-task").start}
+    let(:task) {MultiStepTask.create("some-task")}
 
     it "allows jobs to be added to task" do 
       lambda {
@@ -91,7 +91,7 @@ module  Resque::Plugins
   end
 
   describe MultiStepTask, "synchronous mode" do 
-    let(:task){MultiStepTask.create("some-task").start}
+    let(:task){MultiStepTask.create("some-task")}
 
     before do 
       MultiStepTask.mode = :sync

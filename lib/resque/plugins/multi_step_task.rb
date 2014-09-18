@@ -69,7 +69,7 @@ module Resque
             mst.finalizable!
           end
           
-          mst.start
+          mst
         end
 
         # Prevent calling MultiStepTask.new
@@ -178,7 +178,6 @@ module Resque
       # @param [String] task_id The UUID of the group of interest.
       def initialize(task_id)
         @task_id = task_id
-        redis.setnx 'started', @@synchronous
         redis.setnx 'start-time', Time.now.to_i
       end
 
@@ -188,10 +187,6 @@ module Resque
 
       def redis
         @redis ||= Redis::Namespace.new("resque:multisteptask:#{task_id}", :redis => Resque.redis)
-      end
-
-      def started
-        redis.get('started') == 'true'
       end
 
       # The total number of jobs that are part of this task.
@@ -220,8 +215,11 @@ module Resque
         increment_normal_job_count
         logger.debug("[Resque Multi-Step-Task] Adding #{job_type} job for #{task_id} (args: #{args})")
 
-        redis.rpush 'normal_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
-        run_job job_type, *args if started
+        if synchronous?
+          self.class.perform(task_id, job_type.to_s, *args)
+        else
+          Resque::Job.create(queue_name, self.class, task_id, job_type.to_s, *args)
+        end
       end
 
       # Finalization jobs are performed after all the normal jobs
@@ -235,25 +233,6 @@ module Resque
         logger.debug("[Resque Multi-Step-Task] Adding #{job_type} finalization job for #{task_id} (args: #{args})")
 
         redis.rpush 'finalize_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
-      end
-
-      def start
-        unless started
-          while nrm_job_info = redis.lpop('normal_jobs')
-            job_class, *args = Yajl::Parser.parse(nrm_job_info)
-            run_job(job_class, *args)
-          end
-          redis.set 'started', true
-        end
-        self
-      end
-
-      def run_job(job_type, *args)
-        if synchronous?
-          self.class.perform(task_id, job_type.to_s, *args)
-        else
-          Resque::Job.create(queue_name, self.class, task_id, job_type.to_s, *args)
-        end
       end
 
       # A multi-step task is finalizable when all the normal jobs (see
@@ -273,7 +252,9 @@ module Resque
           # finalization happens after normal jobs, but in the wierd case where 
           # there are only finalization jobs, we need to add a fake normal job
           # that just kicks off the finalization process
-          assure_finalization if normal_job_count == 0
+          #
+          # due to race conditions, always assure finalization - DCM
+          assure_finalization #if normal_job_count == 0
         end
       end
       
