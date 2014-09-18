@@ -87,9 +87,43 @@ module Resque
           
           mst = new(task_id)
         end
+      
+        def perform task_id, job_module_name, *args
+          job_type = constantize job_module_name
+          before_hooks( job_type ).each do |hook|
+            job_type.send( hook, *args )
+          end
+          if around_hooks( job_type ).empty?
+            perform_without_hooks task_id, job_module_name, *args
+          else
+            stack = around_hooks( job_type ).reverse.inject( nil ) do | last_hook, hook |
+              if last_hook
+                lambda do
+                  job_type.send( hook, *args ) { last_hook.call }
+                end
+              else
+                lambda do
+                  job_type.send( hook, *args ) do
+                    perform_without_hooks task_id, job_module_name, *args
+                  end
+                end
+              end
+            end
+            stack.call
+          end
+          after_hooks( job_type ).each do |hook|
+            job_type.send( hook, *args )
+          end
+        end
+          
+        %W{ before around after }.each do |name|
+          define_method "#{name}_hooks" do |job_type|
+            Resque::Plugin.send "#{name}_hooks", job_type
+          end
+        end
 
         # Handle job invocation
-        def perform(task_id, job_module_name, *args)
+        def perform_without_hooks(task_id, job_module_name, *args)
           task = perform_without_maybe_finalize(task_id, job_module_name, *args)
           task.maybe_finalize
         end
@@ -215,13 +249,15 @@ module Resque
       #
       # @param [Class,Module] job_type The type of the job to be performed.
       def add_job(job_type, *args)
-        logger.info("[Resque Multi-Step-Task] Incrementing normal_job_count: #{job_type} job added to task id #{task_id} at #{Time.now} (args: #{args})")
-        
-        increment_normal_job_count
-        logger.debug("[Resque Multi-Step-Task] Adding #{job_type} job for #{task_id} (args: #{args})")
+        with_enque_hooks job_type, *args do
+          logger.info("[Resque Multi-Step-Task] Incrementing normal_job_count: #{job_type} job added to task id #{task_id} at #{Time.now} (args: #{args})")
+          
+          increment_normal_job_count
+          logger.debug("[Resque Multi-Step-Task] Adding #{job_type} job for #{task_id} (args: #{args})")
 
-        redis.rpush 'normal_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
-        run_job job_type, *args if started
+          redis.rpush 'normal_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
+          run_job job_type, *args if started
+        end
       end
 
       # Finalization jobs are performed after all the normal jobs
@@ -230,11 +266,13 @@ module Resque
       #
       # @param [Class,Module] job_type The type of job to be performed.
       def add_finalization_job(job_type, *args)
-        logger.info("[Resque Multi-Step-Task] Incrementing finalize_job_count: Finalization job #{job_type} for task id #{task_id} at #{Time.now} (args: #{args})")
-        increment_finalize_job_count
-        logger.debug("[Resque Multi-Step-Task] Adding #{job_type} finalization job for #{task_id} (args: #{args})")
+        with_enque_hooks job_type, *args do
+          logger.info("[Resque Multi-Step-Task] Incrementing finalize_job_count: Finalization job #{job_type} for task id #{task_id} at #{Time.now} (args: #{args})")
+          increment_finalize_job_count
+          logger.debug("[Resque Multi-Step-Task] Adding #{job_type} finalization job for #{task_id} (args: #{args})")
 
-        redis.rpush 'finalize_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
+          redis.rpush 'finalize_jobs', Yajl::Encoder.encode([job_type.to_s, *args])
+        end
       end
 
       def start
@@ -352,6 +390,22 @@ module Resque
       
       def unfinalized_because_of_errors?
         failed_count > 0 && completed_count < (normal_job_count + finalize_job_count)
+      end
+
+      private
+
+      def with_enque_hooks job_type, *args
+        
+        before_hooks = Resque::Plugin.before_enqueue_hooks( job_type ).collect do |hook|
+          job_type.send hook, *args
+        end
+        return nil if before_hooks.any? { |result| result == false }
+        
+        yield
+        
+        Resque::Plugin.after_enqueue_hooks( job_type ).each do |hook|
+          job_type.send hook, *args
+        end
       end
 
     end

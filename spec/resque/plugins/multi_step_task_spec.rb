@@ -247,6 +247,48 @@ module  Resque::Plugins
       task.should_not be_incomplete_because_of_errors
     end
   end
+
+
+
+  describe MultiStepTask, "enqueing job with hooks" do
+
+    let(:task) { MultiStepTask.create("some-task") }
+
+    before do
+      TestJobWithHooks::DummyClass.should_receive :do_something
+    end
+
+    it "enqueues job with right parameters and executes after enqueue method" do
+      Resque::Job.should_receive(:create).with(
+        task.queue_name, Resque::Plugins::MultiStepTask, task.task_id, 'TestJobWithHooks', { 'before_enqueue' => "do_something"}
+      )
+      args = {}
+      task.add_job TestJobWithHooks, args
+    end
+
+    it "enqueues finalization and executes after enqueue method" do
+      args = {}
+      task.add_finalization_job TestJobWithHooks, args
+    end
+    
+  end
+
+  describe MultiStepTask, "performs job calling hooks" do
+
+    let(:task) { MultiStepTask.create("some-task") }
+
+    before do
+      TestJobWithHooks::DummyClass.should_receive :do_something
+    end
+
+    it "enqueues job with right parameters and executes after enqueue method" do
+      args = {}
+      MultiStepTask.perform(task.task_id, 'TestJobWithHooks', args)
+      args[ 'before_perform' ].should eq "do_something"
+    end
+    
+  end
+
 end
 
 module ::TestJob
@@ -256,6 +298,31 @@ module ::TestJob
 end
 
 module ::MyFinalJob
+  def self.perform(*args)
+    # no op
+  end
+end
+
+module ::TestJobWithHooks
+
+  class DummyClass;end
+
+  def self.before_enqueue_do_something args
+    args[ 'before_enqueue' ] = "do_something"
+  end
+
+  def self.after_enqueue_do_something args
+    DummyClass.do_something
+  end
+
+  def self.before_perform_do_something args
+    args[ 'before_perform' ] = "do_something"
+  end
+
+  def self.after_perform_do_something args
+    DummyClass.do_something
+  end
+
   def self.perform(*args)
     # no op
   end
