@@ -1,7 +1,4 @@
 source 'https://rubygems.org'
 
-gem 'rake'
-gem 'jeweler'
-
-# Specify your gem's dependencies in resque-job-logger.gemspec
+# Specify your gem's dependencies in resque-multi-step.gemspec
 gemspec
